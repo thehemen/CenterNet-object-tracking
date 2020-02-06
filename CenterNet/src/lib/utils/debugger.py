@@ -323,12 +323,12 @@ class Debugger(object):
         if colors is None:
           cl = (self.colors[cat - 1, 0, 0]).tolist()
         else:
-          cl = colors[i]
+          cl = colors[cat][i]
 
         if texts is None:
           txt = None
         else:
-          txt = texts[i]
+          txt = texts[cat][i]
 
         if dets[cat][i, -1] > center_thresh:
           dim = dets[cat][i, 5:8]
@@ -390,7 +390,7 @@ class Debugger(object):
           if colors is None:
             lc = (self.colors[cat - 1, 0, 0]).tolist()
           else:
-            lc = colors[i]
+            lc = colors[cat][i]
           dim = dets[cat][i, 5:8]
           loc  = dets[cat][i, 8:11]
           rot_y = dets[cat][i, 11]

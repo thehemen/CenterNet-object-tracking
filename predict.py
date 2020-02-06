@@ -6,12 +6,12 @@ sys.path.insert(0, CENTERNET_PATH)
 
 import cv2
 import glob
-import random
-import colorsys
 import argparse
 
 from detectors.detector_factory import detector_factory
 from opts import opts
+
+from tracking.track_system import TrackSystem
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Predict 3D bounding boxes by CenterNet.')
@@ -23,32 +23,42 @@ if __name__ == '__main__':
     opt = opts().init('{} --load_model {}'.format('ddd', args.model_name).split(' '))
     detector = detector_factory[opt.task](opt)
 
-    image_names = sorted(glob.glob(args.image_dir))
-    for image_name in image_names:
-        ret = detector.run(image_name)['results']
+    trackSystem = TrackSystem(dist_threshold=15.0)
 
-        for key, val in ret.items():
+    image_names = sorted(glob.glob(args.image_dir))
+    for frame_id, image_name in enumerate(image_names):
+        ret = detector.run(image_name)['results']
+        trackSystem.reset()
+
+        for class_id, val in ret.items():
             for i in range(len(val)):
-                dim = val[i][5: 8]
-                loc  = val[i][8: 11]
+                l, w, h = val[i][5: 8]
+                x, y, z  = val[i][8: 11]
                 rot_y = val[i][11]
                 score = val[i][-1]
-                print('\n{}'.format(classes[key]))
-                print('Track ID: {}'.format(i))
-                print('Dimensions: {:.6f}, {:.6f}, {:.6f}.'.format(dim[0], dim[1], dim[2]))
-                print('Location: {:.6f}, {:.6f}, {:.6f}.'.format(loc[0], loc[1], loc[2]))
-                print('RotY: {:.6f}.'.format(rot_y))
-                print('Score: {:.6f}.'.format(score))
+                trackSystem.add_object(class_id, x, y, z, l, w, h, rot_y, score)
 
-        colors = []
-        texts = []
-        for key, val in ret.items():
-            for i in range(len(val)):
-                # Get bright colors only.
-                h, s, l = random.random(), 0.5 + random.random() / 2.0, 0.4 + random.random() / 5.0
-                r,g,b = [int(256 * i) for i in colorsys.hls_to_rgb(h, l, s)]
-                colors.append(tuple((r, g, b)))
-                texts.append('{}'.format(i))
+        colors = {}
+        texts = {}
+
+        print('\nFrame: {}'.format(frame_id))
+        for track_id in trackSystem.get_object_ids():
+            obj = trackSystem.get_object(track_id)
+
+            print('\n\t{}'.format(classes[obj.class_id]))
+            print('\tTrack ID: {}'.format(track_id))
+            print('\tDimensions: {:.6f}, {:.6f}, {:.6f}.'.format(obj.l, obj.w, obj.h))
+            print('\tLocation: {:.6f}, {:.6f}, {:.6f}.'.format(obj.x, obj.y, obj.z))
+            print('\tRotY: {:.6f}.'.format(obj.rot_y))
+            print('\tScore: {:.6f}.'.format(obj.score))
+
+            if obj.class_id not in colors.keys():
+                colors[obj.class_id] = []
+                texts[obj.class_id] = []
+
+            color = trackSystem.get_color(track_id)
+            colors[obj.class_id].append(color)
+            texts[obj.class_id].append('{}'.format(track_id))
 
         imgs = detector.get_drawn_detections(ret, colors, texts)
 
