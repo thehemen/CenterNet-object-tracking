@@ -113,7 +113,7 @@ class DddDetector(BaseDetector):
       pred = debugger.gen_colormap(output['hm'][0].detach().cpu().numpy())
       debugger.add_blend_img(img, pred, 'pred_hm')
 
-      debugger.add_ct_detection(
+      bboxes = debugger.add_ct_detection(
         img, dets[0], show_box=self.opt.reg_bbox, 
         center_thresh=self.opt.vis_thresh, img_id='det_pred')
       debugger.add_3d_detection(
@@ -123,4 +123,4 @@ class DddDetector(BaseDetector):
       debugger.add_bird_view(
         results, center_thresh=self.opt.vis_thresh, img_id='bird_pred',
         colors=colors)
-      return debugger.return_all_imgs()
+      return debugger.return_all_imgs(), bboxes

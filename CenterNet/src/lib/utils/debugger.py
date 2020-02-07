@@ -278,6 +278,7 @@ class Debugger(object):
   def add_ct_detection(
     self, img, dets, show_box=False, show_txt=True, 
     center_thresh=0.5, img_id='det'):
+    bboxes = []
     # dets: max_preds x 5
     self.imgs[img_id] = img.copy()
     if type(dets) == type({}):
@@ -294,6 +295,7 @@ class Debugger(object):
               self.add_coco_bbox(
                 bbox, cat - 1, dets[cat][i, 2], 
                 show_txt=show_txt, img_id=img_id)
+              bboxes.append(bbox)
     else:
       for i in range(len(dets)):
         if dets[i, 2] > center_thresh:
@@ -309,7 +311,8 @@ class Debugger(object):
             bbox = np.array([x - w / 2, y - h / 2, x + w / 2, y + h / 2],
                             dtype=np.float32)
             self.add_coco_bbox(bbox, dets[i, -1], dets[i, 2], img_id=img_id)
-
+            bboxes.append(bbox)
+    return bboxes
 
   def add_3d_detection(
     self, image_or_path, dets, calib, show_txt=False, 
