@@ -1,9 +1,11 @@
-from .utils import generate_color
+import numpy as np
+from .utils import *
 from .track_object import TrackObject
 
 class TrackSystem:
-    def __init__(self, dist_threshold):
+    def __init__(self, dist_threshold, ttl):
         self.__dist_threshold = dist_threshold
+        self.__ttl = ttl
 
         self.__track_objects = []
         self.__saved_ids = []
@@ -19,7 +21,10 @@ class TrackSystem:
         min_dist = self.__dist_threshold
 
         for i, track_object in enumerate(self.__track_objects):
-            if track_object.is_alive():
+            if not track_object.is_alive():
+                continue
+
+            if track_object.is_updated():
                 continue
 
             if not class_id == track_object.class_id:
@@ -33,14 +38,19 @@ class TrackSystem:
 
         if min_object_id != -1:
             track_id = self.__track_objects[min_object_id].track_id
-            self.__track_objects[min_object_id].update(x, y, z, l, w, h)
+            self.__track_objects[min_object_id].update(x, y, z, l, w, h, self.__ttl)
         else:
             track_id = len(self.__track_objects)
-            new_track_object = TrackObject(track_id, class_id, x, y, z, l, w, h, rot_y, score)
+            new_track_object = TrackObject(track_id, class_id, x, y, z, l, w, h, rot_y, score, self.__ttl)
             self.__track_objects.append(new_track_object)
             self.__colors.append(generate_color())
 
         self.__saved_ids.append(track_id)
+
+    def update(self):
+        for i, track_object in enumerate(self.__track_objects):
+            if track_object.is_alive() and not track_object.is_updated():
+                self.__track_objects[i].kill()
 
     def get_object_ids(self):
         return self.__saved_ids

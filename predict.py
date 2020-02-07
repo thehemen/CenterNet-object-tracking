@@ -23,7 +23,7 @@ if __name__ == '__main__':
     opt = opts().init('{} --load_model {}'.format('ddd', args.model_name).split(' '))
     detector = detector_factory[opt.task](opt)
 
-    trackSystem = TrackSystem(dist_threshold=15.0)
+    trackSystem = TrackSystem(dist_threshold=20.0, ttl=5)
 
     image_names = sorted(glob.glob(args.image_dir))
     for frame_id, image_name in enumerate(image_names):
@@ -60,10 +60,12 @@ if __name__ == '__main__':
             colors[obj.class_id].append(color)
             texts[obj.class_id].append('{}'.format(track_id))
 
+        trackSystem.update()
         imgs = detector.get_drawn_detections(ret, colors, texts)
 
         for i, v in imgs.items():
             cv2.imshow('{}'.format(i), v)
 
         cv2.waitKey(1)
+
     cv2.destroyAllWindows()
