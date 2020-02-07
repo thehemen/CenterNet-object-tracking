@@ -319,18 +319,19 @@ class Debugger(object):
     else: 
       self.imgs[img_id] = cv2.imread(image_or_path)
     for cat in dets:
+      index = 0
       for i in range(len(dets[cat])):
-        if colors is None:
-          cl = (self.colors[cat - 1, 0, 0]).tolist()
-        else:
-          cl = colors[cat][i]
-
-        if texts is None:
-          txt = None
-        else:
-          txt = texts[cat][i]
-
         if dets[cat][i, -1] > center_thresh:
+          if colors is None:
+            cl = (self.colors[cat - 1, 0, 0]).tolist()
+          else:
+            cl = colors[cat][index]
+
+          if texts is None:
+            txt = None
+          else:
+            txt = texts[cat][index]
+
           dim = dets[cat][i, 5:8]
           loc  = dets[cat][i, 8:11]
           rot_y = dets[cat][i, 11]
@@ -340,6 +341,8 @@ class Debugger(object):
             box_3d = compute_box_3d(dim, loc, rot_y)
             box_2d = project_to_image(box_3d, calib)
             self.imgs[img_id] = draw_box_3d(self.imgs[img_id], box_2d, cl, txt)
+
+          index += 1
 
   def compose_vis_add(
     self, img_path, dets, calib,
@@ -382,15 +385,16 @@ class Debugger(object):
             bbox, cat - 1, dets[cat][i, -1], 
             show_txt=show_txt, img_id=img_id)
 
-  def add_bird_view(self, dets, center_thresh=0.3, img_id='bird', colors=None):
+  def add_bird_view(self, dets, center_thresh=0.5, img_id='bird', colors=None):
     bird_view = np.ones((self.out_size, self.out_size, 3), dtype=np.uint8) * 230
     for cat in dets:
+      index = 0
       for i in range(len(dets[cat])):
         if dets[cat][i, -1] > center_thresh:
           if colors is None:
             lc = (self.colors[cat - 1, 0, 0]).tolist()
           else:
-            lc = colors[cat][i]
+            lc = colors[cat][index]
           dim = dets[cat][i, 5:8]
           loc  = dets[cat][i, 8:11]
           rot_y = dets[cat][i, 11]
@@ -406,9 +410,11 @@ class Debugger(object):
             cv2.line(bird_view, (rect[e[0]][0], rect[e[0]][1]),
                     (rect[e[1]][0], rect[e[1]][1]), lc, t,
                     lineType=cv2.LINE_AA)
+        index += 1
+
     self.imgs[img_id] = bird_view
 
-  def add_bird_views(self, dets_dt, dets_gt, center_thresh=0.3, img_id='bird'):
+  def add_bird_views(self, dets_dt, dets_gt, center_thresh=0.5, img_id='bird'):
     alpha = 0.5
     bird_view = np.ones((self.out_size, self.out_size, 3), dtype=np.uint8) * 230
     for ii, (dets, lc, cc) in enumerate(

@@ -20,10 +20,12 @@ if __name__ == '__main__':
     args = parser.parse_args()
     classes = ['__background__', 'Pedestrian', 'Car', 'Cyclist']
 
-    opt = opts().init('{} --load_model {}'.format('ddd', args.model_name).split(' '))
+    center_threshold = 0.5
+    opt = opts().init('{} --load_model {} --vis_thresh {}'.format('ddd', args.model_name,
+        center_threshold).split(' '))
     detector = detector_factory[opt.task](opt)
 
-    trackSystem = TrackSystem(dist_threshold=20.0, ttl=5)
+    trackSystem = TrackSystem(dist_threshold=15.0, ttl=5)
 
     image_names = sorted(glob.glob(args.image_dir))
     for frame_id, image_name in enumerate(image_names):
@@ -36,6 +38,10 @@ if __name__ == '__main__':
                 x, y, z  = val[i][8: 11]
                 rot_y = val[i][11]
                 score = val[i][-1]
+
+                if score <= center_threshold:
+                    continue
+
                 trackSystem.add_object(class_id, x, y, z, l, w, h, rot_y, score)
 
         colors = {}
