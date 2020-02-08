@@ -40,7 +40,7 @@ class TrackObject:
         self.__is_updated = True
         self.__ttl = ttl
 
-    def kill(self):
+    def dec_ttl(self):
         if self.__is_alive:
             if self.__ttl > 0:
                 self.__ttl -= 1

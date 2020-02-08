@@ -22,12 +22,14 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Predict 3D bounding boxes by CenterNet.')
     parser.add_argument('--model_name', default='data/ddd_3dop.pth', help='The pretrained model\'s location.')
-    parser.add_argument('--score_threshold', default=0.5, help='To object score threshold.')
-    parser.add_argument('--dist_threshold', default=15.0, help='To nearest object distances threshold.')
-    parser.add_argument('--ttl', type=int, default=5, help='The objects time-to-live.')
+    parser.add_argument('--score_threshold', default=0.5, help='The object score threshold.')
+    parser.add_argument('--dist_threshold', default=5.0, help='The nearest object distances threshold.')
+    parser.add_argument('--ttl', type=int, default=3, help='The objects time-to-live.')
     parser.add_argument('--begin_index', type=int, default=1, help='The begin index of frame sets.')
     parser.add_argument('--end_index', type=int, default=1, help='The end index of frame sets.')
     parser.add_argument('--is_debug', type=bool, default=True, help='To show debug info or not.')
+    parser.add_argument('--continue_by_key', type=bool, default=False,
+        help='To continue frames processing only by a pressed key (with exit by \'q\').')
     args = parser.parse_args()
     classes = ['__background__', 'Pedestrian', 'Car', 'Cyclist']
 
@@ -42,6 +44,7 @@ if __name__ == '__main__':
     detector = detector_factory[opt.task](opt)
 
     for imageset_index in range(args.begin_index, args.end_index + 1):
+        print('\nImageset Index: {}'.format(imageset_index))
         trackSystem = TrackSystem(dist_threshold=args.dist_threshold, ttl=args.ttl)
 
         imageset_index_str = str(imageset_index).zfill(4)
@@ -65,6 +68,8 @@ if __name__ == '__main__':
 
                     trackSystem.add_object(class_id, x, y, z, l, w, h, rot_y, score)
 
+            trackSystem.update()
+
             colors = {}
             texts = {}
 
@@ -79,7 +84,7 @@ if __name__ == '__main__':
                 colors[obj.class_id].append(color)
                 texts[obj.class_id].append('{}'.format(track_id))
 
-            trackSystem.update()
+            trackSystem.update_ttl()
             imgs, bboxes = detector.get_drawn_detections(ret, colors, texts)
 
             if args.is_debug:
@@ -105,7 +110,13 @@ if __name__ == '__main__':
             if args.is_debug:
                 for i, v in imgs.items():
                     cv2.imshow('{}'.format(i), v)
-                cv2.waitKey(1)
+
+                if args.continue_by_key:
+                    k = cv2.waitKey(0)
+                    if k == 27:
+                        break
+                else:
+                    cv2.waitKey(1)
 
         if args.is_debug:
             cv2.destroyAllWindows()
