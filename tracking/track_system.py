@@ -18,9 +18,9 @@ class TrackSystem:
         self.__new_objects.clear()
         self.__saved_ids.clear()
 
-    def add_object(self, class_id, x, y, z, l, w, h, rot_y, score):
+    def add_object(self, class_id, x, y, z, l, w, h, x_2d, y_2d, w_2d, h_2d, rot_y, score):
         object_id = len(self.__new_objects)
-        new_object = TrackObject(object_id, class_id, x, y, z, l, w, h, rot_y, score, self.__ttl)
+        new_object = TrackObject(object_id, class_id, x, y, z, l, w, h, x_2d, y_2d, w_2d, h_2d, rot_y, score, self.__ttl)
         self.__new_objects.append(new_object)
         self.__saved_ids.append(-1)
 
@@ -56,7 +56,8 @@ class TrackSystem:
             new_object = self.__new_objects[new_object_id]
             x, y, z = new_object.x, new_object.y, new_object.z
             l, w, h = new_object.l, new_object.w, new_object.h
-            self.__track_objects[track_id].update(x, y, z, l, w, h, self.__ttl)
+            x_2d, y_2d, w_2d, h_2d = new_object.x_2d, new_object.y_2d, new_object.w_2d, new_object.h_2d
+            self.__track_objects[track_id].update(x, y, z, l, w, h, x_2d, y_2d, w_2d, h_2d, self.__ttl)
             self.__saved_ids[new_object_id] = track_id
 
         for new_object_id in range(len(self.__saved_ids)):

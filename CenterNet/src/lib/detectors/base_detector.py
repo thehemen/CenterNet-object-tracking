@@ -79,7 +79,7 @@ class BaseDetector(object):
   def show_results(self, debugger, image, results):
    raise NotImplementedError
 
-  def get_drawn_detections(self, results, colors, texts):
+  def visualize_results(self, bboxes, colors, annotations):
    raise NotImplementedError
 
   def run(self, image_or_path_or_tensor, meta=None):
@@ -126,18 +126,17 @@ class BaseDetector(object):
       if self.opt.debug >= 2:
         self.debug(debugger, images, dets, output, scale)
 
-      # To be used by get_drawn_detections() later.
-      self.__images = images
-      self.__dets = dets
-      self.__output = output
-      self.__scale = scale
-      
-      dets_postprocessed = self.post_process(dets, meta, scale)
+      # To be used by visualize_results() later.
+      self._images = images
+      self._output = output
+      self._scale = scale
+
+      post_dets = self.post_process(dets, meta, scale)
       torch.cuda.synchronize()
       post_process_time = time.time()
       post_time += post_process_time - decode_time
 
-      detections.append(dets_postprocessed)
+      detections.append(post_dets)
     
     results = self.merge_outputs(detections)
     torch.cuda.synchronize()
@@ -147,16 +146,14 @@ class BaseDetector(object):
 
     if self.opt.debug >= 1:
       self.show_results(debugger, image, results)
-    
-    # To be used by get_drawn_detections() later.
-    self.__debugger = debugger
-    self.__image = image
 
-    return {'results': results, 'tot': tot_time, 'load': load_time,
+    # To be used by visualize_results() later.
+    self._debugger = debugger
+    self._image = image
+    
+    return {'results': results, 'dets': dets, 'tot': tot_time, 'load': load_time,
             'pre': pre_time, 'net': net_time, 'dec': dec_time,
             'post': post_time, 'merge': merge_time}
 
-  def get_drawn_detections(self, results, colors=None, texts=None):
-    return self.get_drawn_results(results, self.__debugger,
-      self.__image, self.__images, self.__dets, self.__output, self.__scale,
-      colors, texts)
+  def get_drawn_results(self, bboxes, colors, annotations):
+    return self.visualize_results(bboxes, colors, annotations)

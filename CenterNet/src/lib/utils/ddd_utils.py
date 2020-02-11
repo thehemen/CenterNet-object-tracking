@@ -46,8 +46,7 @@ def compute_orientation_3d(dim, location, rotation_y):
                    np.array(location, dtype=np.float32).reshape(3, 1)
   return orientation_3d.transpose(1, 0)
 
-def draw_box_3d(image, corners, c=(0, 0, 255), txt=None):
-  font = cv2.FONT_HERSHEY_SIMPLEX
+def draw_box_3d(image, corners, c=(0, 0, 255)):
   face_idx = [[0,1,5,4],
               [1,2,6, 5],
               [2,3,7,6],
@@ -58,24 +57,40 @@ def draw_box_3d(image, corners, c=(0, 0, 255), txt=None):
       cv2.line(image, (corners[f[j], 0], corners[f[j], 1]),
                (corners[f[(j+1)%4], 0], corners[f[(j+1)%4], 1]), c, 2, lineType=cv2.LINE_AA)
     if ind_f == 0:
-      if txt is not None:
-        # IT'S OVER NINE THOUSAND!
-        x_loc = 9001
-        y_loc = 9001
-
-        for i in range(4):
-          if int(corners[f[i], 0]) < x_loc:
-            x_loc = int(corners[f[i], 0])
-          if int(corners[f[i], 1]) < y_loc:
-            y_loc = int(corners[f[i], 1])
-
-        cv2.rectangle(image, (x_loc, y_loc - 16), (x_loc + len(txt) * 12, y_loc), c, -1)
-        cv2.putText(image, txt, (x_loc, y_loc - 4), font, 0.5, (0, 0, 0), thickness=1, lineType=cv2.LINE_AA)
-
       cv2.line(image, (corners[f[0], 0], corners[f[0], 1]),
                (corners[f[2], 0], corners[f[2], 1]), c, 1, lineType=cv2.LINE_AA)
       cv2.line(image, (corners[f[1], 0], corners[f[1], 1]),
                (corners[f[3], 0], corners[f[3], 1]), c, 1, lineType=cv2.LINE_AA)
+  return image
+
+def draw_box_3d_new(image, corners, color, annotation):
+  font = cv2.FONT_HERSHEY_SIMPLEX
+  face_idx = [[0,1,5,4],
+              [1,2,6, 5],
+              [2,3,7,6],
+              [3,0,4,7]]
+  for ind_f in range(3, -1, -1):
+    f = face_idx[ind_f]
+    for j in range(4):
+      cv2.line(image, (corners[f[j], 0], corners[f[j], 1]),
+               (corners[f[(j+1)%4], 0], corners[f[(j+1)%4], 1]), color, 2, lineType=cv2.LINE_AA)
+    if ind_f == 0:
+      x_loc = 9001
+      y_loc = 9001
+
+      for i in range(4):
+        if int(corners[f[i], 0]) < x_loc:
+          x_loc = int(corners[f[i], 0])
+        if int(corners[f[i], 1]) < y_loc:
+          y_loc = int(corners[f[i], 1])
+
+      cv2.rectangle(image, (x_loc, y_loc - 16), (x_loc + len(annotation) * 12, y_loc), color, -1)
+      cv2.putText(image, annotation, (x_loc, y_loc - 4), font, 0.5, (0, 0, 0), thickness=1, lineType=cv2.LINE_AA)
+
+      cv2.line(image, (corners[f[0], 0], corners[f[0], 1]),
+               (corners[f[2], 0], corners[f[2], 1]), color, 1, lineType=cv2.LINE_AA)
+      cv2.line(image, (corners[f[1], 0], corners[f[1], 1]),
+               (corners[f[3], 0], corners[f[3], 1]), color, 1, lineType=cv2.LINE_AA)
   return image
 
 def unproject_2d_to_3d(pt_2d, depth, P):

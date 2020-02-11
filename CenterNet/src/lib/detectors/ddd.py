@@ -98,29 +98,22 @@ class DddDetector(BaseDetector):
       center_thresh=self.opt.vis_thresh, img_id='det_pred')
   
   def show_results(self, debugger, image, results):
-      debugger.add_3d_detection(
-        image, results, self.this_calib,
-        center_thresh=self.opt.vis_thresh, img_id='add_pred')
-      debugger.add_bird_view(
-        results, center_thresh=self.opt.vis_thresh, img_id='bird_pred')
-      debugger.show_all_imgs(pause=self.pause)
+    debugger.add_3d_detection(
+      image, results, self.this_calib,
+      center_thresh=self.opt.vis_thresh, img_id='add_pred')
+    debugger.add_bird_view(
+      results, center_thresh=self.opt.vis_thresh, img_id='bird_pred')
+    debugger.show_all_imgs(pause=self.pause)
 
-  def get_drawn_results(self, results, debugger, image, images, dets, output, scale=1,
-    colors=None, texts=None):
-      dets = dets.detach().cpu().numpy()
-      img = images[0].detach().cpu().numpy().transpose(1, 2, 0)
-      img = ((img * self.std + self.mean) * 255).astype(np.uint8)
-      pred = debugger.gen_colormap(output['hm'][0].detach().cpu().numpy())
-      debugger.add_blend_img(img, pred, 'pred_hm')
+  def visualize_results(self, bboxes_3d, colors, annotations):
+    img = self._images[0].detach().cpu().numpy().transpose(1, 2, 0)
+    img = ((img * self.std + self.mean) * 255).astype(np.uint8)
+    pred = self._debugger.gen_colormap(self._output['hm'][0].detach().cpu().numpy())
+    self._debugger.add_blend_img(img, pred, 'pred_hm')
 
-      bboxes = debugger.add_ct_detection(
-        img, dets[0], show_box=self.opt.reg_bbox, 
-        center_thresh=self.opt.vis_thresh, img_id='det_pred')
-      debugger.add_3d_detection(
-        image, results, self.this_calib,
-        center_thresh=self.opt.vis_thresh, img_id='add_pred',
-        colors=colors, texts=texts)
-      debugger.add_bird_view(
-        results, center_thresh=self.opt.vis_thresh, img_id='bird_pred',
-        colors=colors)
-      return debugger.return_all_imgs(), bboxes
+    center_threshold = self.opt.vis_thresh
+    bboxes_2d = self._debugger.add_ct_detection_new(img, bboxes_3d, center_threshold, img_id='det_pred')
+    self._debugger.add_3d_detection_new(self._image, bboxes_3d, colors, annotations,
+      self.this_calib, center_threshold, img_id='add_pred')
+    self._debugger.add_bird_view_new(bboxes_3d, colors, center_threshold, img_id='bird_pred')
+    return self._debugger.return_images(), bboxes_2d

@@ -53,9 +53,11 @@ if __name__ == '__main__':
         f = open(out_dir.format(imageset_index_str), 'w')
 
         for frame_id in tqdm.tqdm(range(len(image_names)), disable=args.is_debug):
-            ret = detector.run(image_names[frame_id])['results']
+            outputs = detector.run(image_names[frame_id])
+            ret, dets = outputs['results'], outputs['dets'][0]
             trackSystem.reset()
 
+            index = 0
             for class_id, val in ret.items():
                 for i in range(len(val)):
                     l, w, h = val[i][5: 8]
@@ -66,26 +68,30 @@ if __name__ == '__main__':
                     if score <= args.score_threshold:
                         continue
 
-                    trackSystem.add_object(class_id, x, y, z, l, w, h, rot_y, score)
+                    while dets[index, 2] <= args.score_threshold:
+                        index += 1
+
+                    w_2d, h_2d = dets[index, -3], dets[index, -2]
+                    x_2d, y_2d = dets[index, 0], dets[index, 1]
+                    trackSystem.add_object(class_id, x, y, z, l, w, h, x_2d, y_2d, w_2d, h_2d, rot_y, score)
+                    index += 1
 
             trackSystem.update()
 
-            colors = {}
-            texts = {}
+            bboxes_3d = []
+            colors = []
+            texts = []
 
             for track_id in trackSystem.get_object_ids():
                 obj = trackSystem.get_object(track_id)
-
-                if obj.class_id not in colors.keys():
-                    colors[obj.class_id] = []
-                    texts[obj.class_id] = []
+                bboxes_3d.append(obj)
 
                 color = trackSystem.get_color(track_id)
-                colors[obj.class_id].append(color)
-                texts[obj.class_id].append('{}'.format(track_id))
+                colors.append(color)
+                texts.append('{}'.format(track_id))
 
             trackSystem.update_ttl()
-            imgs, bboxes = detector.get_drawn_detections(ret, colors, texts)
+            imgs, bboxes = detector.get_drawn_results(bboxes_3d, colors, texts)
 
             if args.is_debug:
                 print('\nFrame: {}'.format(frame_id))
@@ -97,12 +103,8 @@ if __name__ == '__main__':
                 x1, y1, x2, y2 = bbox
 
                 if args.is_debug:
-                    print('\n\t{}'.format(class_name))
-                    print('\tTrack ID: {}'.format(track_id))
-                    print('\tDimensions: {:.6f}, {:.6f}, {:.6f}.'.format(obj.l, obj.w, obj.h))
-                    print('\tLocation: {:.6f}, {:.6f}, {:.6f}.'.format(obj.x, obj.y, obj.z))
-                    print('\tRotY: {:.6f}.'.format(obj.rot_y))
-                    print('\tScore: {:.6f}.'.format(score))
+                    print('\t{}. ID: {}. {:.6f}, {:.6f}, {:.6f}. ({:.6f} x {:.6f} x {:.6f}). RotY: {:.6f}. Score: {:.3f}.'.format(class_name,
+                        track_id, obj.x, obj.y, obj.z, obj.l, obj.w, obj.h, obj.rot_y, score))
 
                 f.write('{} {} {} 0 0 0 {} {} {} {} 0.0 0.0 0.0 0.0 0.0 0.0 0.0 {}\n'.format(frame_id,
                     track_id, class_name, x1, y1, x2, y2, score))
