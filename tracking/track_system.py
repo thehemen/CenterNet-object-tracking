@@ -1,5 +1,6 @@
 import numpy as np
 from .utils import *
+from .bounding_box import BoundingBox
 from .track_object import TrackObject
 
 class TrackSystem:
@@ -20,7 +21,8 @@ class TrackSystem:
 
     def add_object(self, class_id, x, y, z, l, w, h, x_2d, y_2d, w_2d, h_2d, rot_y, score):
         object_id = len(self.__new_objects)
-        new_object = TrackObject(object_id, class_id, x, y, z, l, w, h, x_2d, y_2d, w_2d, h_2d, rot_y, score, self.__ttl)
+        bbox = BoundingBox(class_id, x, y, z, l, w, h, x_2d, y_2d, w_2d, h_2d, rot_y, score)
+        new_object = TrackObject(object_id, bbox, self.__ttl)
         self.__new_objects.append(new_object)
         self.__saved_ids.append(-1)
 
@@ -28,18 +30,16 @@ class TrackSystem:
         pairs = []
 
         for new_object_id, new_object in enumerate(self.__new_objects):
-            new_object = self.__new_objects[new_object_id]
-            class_id = new_object.class_id
-            x, y, z = new_object.x, new_object.y, new_object.z
+            bbox = self.__new_objects[new_object_id].bbox
 
             for track_id, track_object in enumerate(self.__track_objects):
                 if not track_object.is_alive():
                     continue
 
-                if not class_id == track_object.class_id:
+                if not track_object.bbox.class_id == bbox.class_id:
                     continue
 
-                distance = track_object.distance(x, y, z)
+                distance = track_object.bbox.distance(bbox)
 
                 if distance < self.__dist_threshold:
                     pairs.append(tuple((new_object_id, track_id, distance)))
@@ -53,11 +53,8 @@ class TrackSystem:
             if self.__track_objects[track_id].is_updated():
                 continue
 
-            new_object = self.__new_objects[new_object_id]
-            x, y, z = new_object.x, new_object.y, new_object.z
-            l, w, h = new_object.l, new_object.w, new_object.h
-            x_2d, y_2d, w_2d, h_2d = new_object.x_2d, new_object.y_2d, new_object.w_2d, new_object.h_2d
-            self.__track_objects[track_id].update(x, y, z, l, w, h, x_2d, y_2d, w_2d, h_2d, self.__ttl)
+            bbox = self.__new_objects[new_object_id].bbox
+            self.__track_objects[track_id].update(bbox, self.__ttl)
             self.__saved_ids[new_object_id] = track_id
 
         for new_object_id in range(len(self.__saved_ids)):
