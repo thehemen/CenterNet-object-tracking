@@ -22,14 +22,20 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Predict 3D bounding boxes by CenterNet.')
     parser.add_argument('--model_name', default='data/ddd_3dop.pth', help='The pretrained model\'s location.')
-    parser.add_argument('--score_threshold', default=0.5, help='The object score threshold.')
-    parser.add_argument('--dist_threshold', default=5.0, help='The nearest object distances threshold.')
+    parser.add_argument('--score_threshold', type=float, default=0.5, help='The object score threshold.')
+    parser.add_argument('--dist_threshold', type=float, default=5.0, help='The nearest object distances threshold.')
     parser.add_argument('--ttl', type=int, default=3, help='The objects time-to-live.')
     parser.add_argument('--begin_index', type=int, default=1, help='The begin index of frame sets.')
     parser.add_argument('--end_index', type=int, default=1, help='The end index of frame sets.')
-    parser.add_argument('--is_debug', type=bool, default=True, help='To show debug info or not.')
-    parser.add_argument('--continue_by_key', type=bool, default=False,
-        help='To continue frames processing only by a pressed key (with exit by \'q\').')
+    parser.add_argument('--show_frames', dest='is_shown', help='To show debug information.', action='store_true')
+    parser.add_argument('--no_show_frames', dest='is_shown', help='Not to show debug information.', action='store_false')
+    parser.add_argument('--verbose', dest='is_verbose', help='To print out debug information.', action='store_true')
+    parser.add_argument('--no_verbose', dest='is_verbose', help='Not to print out debug information.', action='store_false')
+    parser.add_argument('--with_keys', dest='continue_by_key', help='To continue frames processing only by a pressed key (with exit by \'q\').', action='store_true')
+    parser.add_argument('--with_no_keys', dest='continue_by_key', help='To output frames without waiting for a key pressed.', action='store_false')
+    parser.set_defaults(is_shown=True)
+    parser.set_defaults(is_verbose=True)
+    parser.set_defaults(continue_by_key=False)
     args = parser.parse_args()
     classes = ['__background__', 'Pedestrian', 'Car', 'Cyclist']
 
@@ -52,7 +58,7 @@ if __name__ == '__main__':
 
         f = open(out_dir.format(imageset_index_str), 'w')
 
-        for frame_id in tqdm.tqdm(range(len(image_names)), disable=args.is_debug):
+        for frame_id in tqdm.tqdm(range(len(image_names)), disable=args.is_verbose):
             outputs = detector.run(image_names[frame_id])
             ret, dets = outputs['results'], outputs['dets'][0]
             trackSystem.reset()
@@ -93,7 +99,7 @@ if __name__ == '__main__':
             trackSystem.update_ttl()
             imgs, bboxes_2d = detector.get_drawn_results(bboxes_3d, colors, texts)
 
-            if args.is_debug:
+            if args.is_verbose:
                 print('\nFrame: {}'.format(frame_id))
 
             for track_id, bbox_2d in zip(trackSystem.get_object_ids(), bboxes_2d):
@@ -102,14 +108,14 @@ if __name__ == '__main__':
                 score = bbox.score
                 x1, y1, x2, y2 = bbox_2d
 
-                if args.is_debug:
+                if args.is_verbose:
                     print('\t{}. ID: {}. {:.6f}, {:.6f}, {:.6f}. ({:.6f} x {:.6f} x {:.6f}). RotY: {:.6f}. Score: {:.3f}.'.format(class_name,
                         track_id, bbox.x, bbox.y, bbox.z, bbox.l, bbox.w, bbox.h, bbox.rot_y, score))
 
                 f.write('{} {} {} 0 0 0 {} {} {} {} 0.0 0.0 0.0 0.0 0.0 0.0 0.0 {}\n'.format(frame_id,
                     track_id, class_name, x1, y1, x2, y2, score))
 
-            if args.is_debug:
+            if args.is_shown:
                 for i, v in imgs.items():
                     cv2.imshow('{}'.format(i), v)
 
@@ -120,6 +126,6 @@ if __name__ == '__main__':
                 else:
                     cv2.waitKey(1)
 
-        if args.is_debug:
+        if args.is_shown:
             cv2.destroyAllWindows()
         f.close()
