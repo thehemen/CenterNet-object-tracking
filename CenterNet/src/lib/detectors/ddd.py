@@ -112,8 +112,8 @@ class DddDetector(BaseDetector):
     self._debugger.add_blend_img(img, pred, 'pred_hm')
 
     center_threshold = self.opt.vis_thresh
-    bboxes_2d = self._debugger.add_ct_detection_new(img, bboxes_3d, center_threshold, img_id='det_pred')
-    self._debugger.add_3d_detection_new(self._image, bboxes_3d, colors, annotations,
+    boxes_2d = self._debugger.add_3d_detection_new(self._image, bboxes_3d, colors, annotations,
       self.this_calib, center_threshold, img_id='add_pred')
+    self._debugger.add_ct_detection_new(img, bboxes_3d, boxes_2d, center_threshold, img_id='det_pred')
     self._debugger.add_bird_view_new(bboxes_3d, colors, center_threshold, img_id='bird_pred')
-    return self._debugger.return_images(), bboxes_2d
+    return self._debugger.return_images(), boxes_2d

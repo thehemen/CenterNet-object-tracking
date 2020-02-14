@@ -59,11 +59,9 @@ if __name__ == '__main__':
         f = open(out_dir.format(imageset_index_str), 'w')
 
         for frame_id in tqdm.tqdm(range(len(image_names)), disable=args.is_verbose):
-            outputs = detector.run(image_names[frame_id])
-            ret, dets = outputs['results'], outputs['dets'][0]
+            ret = detector.run(image_names[frame_id])['results']
             trackSystem.reset()
 
-            index = 0
             for class_id, val in ret.items():
                 for i in range(len(val)):
                     l, w, h = val[i][5: 8]
@@ -74,13 +72,7 @@ if __name__ == '__main__':
                     if score <= args.score_threshold:
                         continue
 
-                    while dets[index, 2] <= args.score_threshold:
-                        index += 1
-
-                    w_2d, h_2d = dets[index, -3], dets[index, -2]
-                    x_2d, y_2d = dets[index, 0], dets[index, 1]
-                    trackSystem.add_object(class_id, x, y, z, l, w, h, x_2d, y_2d, w_2d, h_2d, rot_y, score)
-                    index += 1
+                    trackSystem.add_object(class_id, x, y, z, l, w, h, rot_y, score)
 
             trackSystem.update()
 
@@ -116,7 +108,8 @@ if __name__ == '__main__':
                     track_id, class_name, x1, y1, x2, y2, score))
 
             if args.is_shown:
-                for i, v in imgs.items():
+                for i in ['bird_pred', 'det_pred', 'add_pred']:
+                    v = imgs[i]
                     cv2.imshow('{}'.format(i), v)
 
                 if args.continue_by_key:

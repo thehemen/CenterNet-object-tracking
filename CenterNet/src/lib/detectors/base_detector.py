@@ -151,7 +151,7 @@ class BaseDetector(object):
     self._debugger = debugger
     self._image = image
     
-    return {'results': results, 'dets': dets, 'tot': tot_time, 'load': load_time,
+    return {'results': results, 'tot': tot_time, 'load': load_time,
             'pre': pre_time, 'net': net_time, 'dec': dec_time,
             'post': post_time, 'merge': merge_time}
 

@@ -313,19 +313,14 @@ class Debugger(object):
                             dtype=np.float32)
             self.add_coco_bbox(bbox, dets[i, -1], dets[i, 2], img_id=img_id)
 
-  def add_ct_detection_new(self, image, bboxes, center_thresh=0.5, img_id='det'):
+  def add_ct_detection_new(self, image, bboxes, boxes_2d, center_thresh=0.5, img_id='det'):
     self.imgs[img_id] = image.copy()
-    bboxes_2d = []
 
-    for bbox in bboxes:
+    for i, bbox in enumerate(bboxes):
       if bbox.score > center_thresh:
-        w, h = bbox.w_2d * self.down_ratio, bbox.h_2d * self.down_ratio
-        x, y = bbox.x_2d * self.down_ratio, bbox.y_2d * self.down_ratio
-        bbox_2d = np.array([x - w / 2, y - h / 2, x + w / 2, y + h / 2], dtype=np.float32)
-        bboxes_2d.append(bbox_2d)
+        box_2d = boxes_2d[i]
+        bbox_2d = np.array([box_2d[0], box_2d[1], box_2d[2], box_2d[3]], dtype=np.float32)
         self.add_coco_bbox(bbox_2d, bbox.class_id - 1, bbox.score, show_txt=True, img_id=img_id)
-
-    return bboxes_2d
 
   def add_3d_detection(
     self, image_or_path, dets, calib, show_txt=False, 
@@ -350,6 +345,7 @@ class Debugger(object):
 
   def add_3d_detection_new(self, image, bboxes, colors, annotations, calib, center_thresh=0.5, img_id='det'):
     self.imgs[img_id] = image
+    bboxes_2d = []
 
     for i, bbox in enumerate(bboxes):
       color = colors[i]
@@ -360,10 +356,17 @@ class Debugger(object):
         loc  = bbox.x, bbox.y, bbox.z
         rot_y = bbox.rot_y
 
+        box_3d = compute_box_3d(dim, loc, rot_y)
+        box_2d = project_to_image(box_3d, calib)
+        x_min = np.min(box_2d[:, 0])
+        y_min = np.min(box_2d[:, 1])
+        x_max = np.max(box_2d[:, 0])
+        y_max = np.max(box_2d[:, 1])
+        bboxes_2d.append([x_min, y_min, x_max, y_max])
         if bbox.z > 1:
-          box_3d = compute_box_3d(dim, loc, rot_y)
-          box_2d = project_to_image(box_3d, calib)
           self.imgs[img_id] = draw_box_3d_new(self.imgs[img_id], box_2d, color, annotation)
+          
+    return bboxes_2d
 
   def compose_vis_add(
     self, img_path, dets, calib,
