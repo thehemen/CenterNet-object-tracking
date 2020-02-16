@@ -24,6 +24,8 @@ if __name__ == '__main__':
     parser.add_argument('--model_name', default='data/ddd_3dop.pth', help='The pretrained model\'s location.')
     parser.add_argument('--score_threshold', type=float, default=0.5, help='The object score threshold.')
     parser.add_argument('--dist_threshold', type=float, default=5.0, help='The nearest object distances threshold.')
+    parser.add_argument('--iou_threshold', type=float, default=0.5, help='The lowest object IoU threshold.')
+    parser.add_argument('--depth_threshold', type=float, default=10.0, help='The shortest alive object distance to the observer.')
     parser.add_argument('--ttl', type=int, default=3, help='The objects time-to-live.')
     parser.add_argument('--begin_index', type=int, default=1, help='The begin index of frame sets.')
     parser.add_argument('--end_index', type=int, default=1, help='The end index of frame sets.')
@@ -51,7 +53,7 @@ if __name__ == '__main__':
 
     for imageset_index in range(args.begin_index, args.end_index + 1):
         print('\nImageset Index: {}'.format(imageset_index))
-        trackSystem = TrackSystem(dist_threshold=args.dist_threshold, ttl=args.ttl)
+        trackSystem = TrackSystem(args.dist_threshold, args.iou_threshold, args.depth_threshold, args.ttl)
 
         imageset_index_str = str(imageset_index).zfill(4)
         image_names = sorted(glob.glob(image_dir.format(imageset_index_str)))
@@ -88,7 +90,6 @@ if __name__ == '__main__':
                 colors.append(color)
                 texts.append('{}'.format(track_id))
 
-            trackSystem.update_ttl()
             imgs, bboxes_2d = detector.get_drawn_results(bboxes_3d, colors, texts)
 
             if args.is_verbose:
