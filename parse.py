@@ -14,29 +14,30 @@ class BoundingBox2D:
         self.score = score
 
 if __name__ == '__main__':
-    image_dir = '../kitti/training/image_02/{}/*.png'
-    gt_dir = '../kitti/training/label_02/{}.txt'
+    image_dir = '../kitti/{}/image_02/{}/*.png'
+    gt_dir = '../kitti/{}/label_02/{}.txt'
     pred_dir = '../kitti/devkit_tracking/devkit/python/results/result_sha/data/{}.txt'
     classes = ['Car', 'Van', 'Truck', 'Pedestrian', 'Person_sitting', 'Cyclist', 'Tram', 'Misc']
 
     parser = argparse.ArgumentParser(description='Parse the KITTI ground truth or predictions.')
+    parser.add_argument('--dataset_type', default='training', help='The processed dataset type.')
     parser.add_argument('--index', type=int, default=1, help='The index of ground truth/predictions.')
     parser.add_argument('--is_gt', type=bool, default=False, help='To use ground truth or predictions.')
     args = parser.parse_args()
 
     if args.is_gt:
-        label_dir = gt_dir
+        label_dir = gt_dir.format(args.dataset_type, str(args.index).zfill(4))
     else:
-        label_dir = pred_dir
+        label_dir = pred_dir.format(str(args.index).zfill(4))
 
-    frame_names = sorted(glob.glob(image_dir.format(str(args.index).zfill(4))))
+    frame_names = sorted(glob.glob(image_dir.format(args.dataset_type, str(args.index).zfill(4))))
     bboxes = {}
     colors = {}
 
     for frame_id in range(len(frame_names)):
         bboxes[frame_id] = []
 
-    with open(label_dir.format(str(args.index).zfill(4)), 'r') as f:
+    with open(label_dir, 'r') as f:
         lines = f.readlines()
 
         for line in lines:

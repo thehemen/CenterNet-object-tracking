@@ -19,12 +19,13 @@ if __name__ == '__main__':
     width = 1242.0
     height = 375.0
 
-    image_dir = '../kitti/training/image_02/{}/*.png'
-    seqmap_in_file = '../kitti/devkit_tracking/devkit/python/data/tracking/evaluate_tracking.seqmap.training'
+    image_dir = '../kitti/{}/image_02/{}/*.png'
+    seqmap_in_file = '../kitti/devkit_tracking/devkit/python/data/tracking/evaluate_tracking.seqmap.{}'
     seqmap_out_file = '../kitti/devkit_tracking/devkit/python/data/tracking/evaluate_tracking.seqmap'
     out_dir = '../kitti/devkit_tracking/devkit/python/results/result_sha/data/{}.txt'
 
     parser = argparse.ArgumentParser(description='Predict 3D bounding boxes by CenterNet.')
+    parser.add_argument('--dataset_type', default='training', help='The processed dataset type.')
     parser.add_argument('--model_name', default='data/ddd_3dop.pth', help='The pretrained model\'s location.')
     parser.add_argument('--score_threshold', type=float, default=0.5, help='The object score threshold.')
     parser.add_argument('--dist_threshold', type=float, default=5.0, help='The nearest object distances threshold.')
@@ -47,7 +48,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     classes = ['__background__', 'Pedestrian', 'Car', 'Cyclist']
 
-    with open(seqmap_in_file, 'r') as seq_in:
+    with open(seqmap_in_file.format(args.dataset_type), 'r') as seq_in:
         with open(seqmap_out_file, 'w') as seq_out:
             lines = seq_in.readlines()
             for i in range(args.begin_index, args.end_index + 1):
@@ -64,7 +65,7 @@ if __name__ == '__main__':
             z_min_threshold=args.check_zmin, dim_ratio=args.check_dim_ratio)
 
         imageset_index_str = str(imageset_index).zfill(4)
-        image_names = sorted(glob.glob(image_dir.format(imageset_index_str)))
+        image_names = sorted(glob.glob(image_dir.format(args.dataset_type, imageset_index_str)))
 
         f = open(out_dir.format(imageset_index_str), 'w')
 
