@@ -12,9 +12,13 @@ import argparse
 from detectors.detector_factory import detector_factory
 from opts import opts
 
+from tracking.track_checking import TrackChecking
 from tracking.track_system import TrackSystem
 
 if __name__ == '__main__':
+    width = 1242.0
+    height = 375.0
+
     image_dir = '../kitti/training/image_02/{}/*.png'
     seqmap_in_file = '../kitti/devkit_tracking/devkit/python/data/tracking/evaluate_tracking.seqmap.training'
     seqmap_out_file = '../kitti/devkit_tracking/devkit/python/data/tracking/evaluate_tracking.seqmap'
@@ -26,6 +30,8 @@ if __name__ == '__main__':
     parser.add_argument('--dist_threshold', type=float, default=5.0, help='The nearest object distances threshold.')
     parser.add_argument('--iou_threshold', type=float, default=0.5, help='The lowest object IoU threshold.')
     parser.add_argument('--depth_threshold', type=float, default=10.0, help='The shortest alive object distance to the observer.')
+    parser.add_argument('--check_zmin', type=float, default=1.0, help='The lowest Zmin to modify 3D bbox when checking.')
+    parser.add_argument('--check_dim_ratio', type=float, default=0.75, help='The ratio that every dim is divided by when checking 3D.')
     parser.add_argument('--ttl', type=int, default=3, help='The objects time-to-live.')
     parser.add_argument('--begin_index', type=int, default=1, help='The begin index of frame sets.')
     parser.add_argument('--end_index', type=int, default=1, help='The end index of frame sets.')
@@ -54,6 +60,8 @@ if __name__ == '__main__':
     for imageset_index in range(args.begin_index, args.end_index + 1):
         print('\nImageset Index: {}'.format(imageset_index))
         trackSystem = TrackSystem(args.dist_threshold, args.iou_threshold, args.depth_threshold, args.ttl)
+        trackChecking = TrackChecking(width, height,
+            z_min_threshold=args.check_zmin, dim_ratio=args.check_dim_ratio)
 
         imageset_index_str = str(imageset_index).zfill(4)
         image_names = sorted(glob.glob(image_dir.format(imageset_index_str)))
@@ -83,7 +91,8 @@ if __name__ == '__main__':
             texts = []
 
             for track_id in trackSystem.get_object_ids():
-                bbox = trackSystem.get_object(track_id).bbox
+                bbox = trackSystem.get_object(track_id).bbox.copy()
+                bbox = trackChecking.check_bbox_3d(track_id, bbox)
                 bboxes_3d.append(bbox)
 
                 color = trackSystem.get_color(track_id)
@@ -99,7 +108,7 @@ if __name__ == '__main__':
                 bbox = trackSystem.get_object(track_id).bbox
                 class_name = classes[bbox.class_id]
                 score = bbox.score
-                x1, y1, x2, y2 = bbox_2d
+                x1, y1, x2, y2 = trackChecking.check_bbox_2d(bbox_2d)
 
                 if args.is_verbose:
                     print('\t{}. ID: {}. {:.6f}, {:.6f}, {:.6f}. ({:.6f} x {:.6f} x {:.6f}). RotY: {:.6f}. Score: {:.3f}.'.format(class_name,
