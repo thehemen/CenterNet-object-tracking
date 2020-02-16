@@ -16,6 +16,7 @@ python3 parse.py [--dataset_type] [--index] [--is_gt]
 ~~~
 # Results
 Unfortunately, this model can't be evaluated on the testing KITTI dataset due to its policy. So, only training dataset's results are published.
+
 |Class|MOTA|MOTP|MT|ML|IDS|FRAG|
 |-----|----|----|--|--|---|----|
 |Car|79.90%|80.22%|70.92%|6.91%|165|539|
