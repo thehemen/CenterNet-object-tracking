@@ -6,7 +6,9 @@ Firstly, [download](http://www.cvlibs.net/datasets/kitti/eval_tracking.php) the 
 
 Secondly, download the pretrained [ddd_3dop.pth](https://drive.google.com/open?id=1znsM6E-aVTkATreDuUVxoU0ajL1az8rz) model.
 
-Finally, install all the necessary pip3 packages:
+Finally, follow [these steps](https://github.com/xingyizhou/CenterNet/blob/master/readme/INSTALL.md) for installation.
+
+If you have some issues with torch - torchvision compatibility, try this:
 ~~~
 sudo pip3 install -r requirements.txt
 ~~~
@@ -19,6 +21,20 @@ To show already predicted objects, use:
 ~~~
 python3 parse.py [--dataset_type] [--index] [--is_gt]
 ~~~
+# Examples
+Screenshots were taken from the first image of 0001 training dataset.
+Raw 2D bounding boxes:
+
+![Raw 2D bounding boxes](data/det_pred.png)
+
+Tracked 3D bounding boxes:
+
+![Tracked 3D bounding boxes](data/add_pred.png)
+
+Bird-view bounding boxes:
+
+![Bird-view bounding boxes](data/bird_view.png)
+
 # Results
 Unfortunately, this model can't be evaluated on the testing KITTI dataset due to its policy. So, only training dataset's results are published.
 
