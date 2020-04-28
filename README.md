@@ -2,9 +2,14 @@
 This project is used to implement the KITTI object detection and tracking system using a pretrained [CenterNet](https://github.com/xingyizhou/CenterNet) model.
 
 # How to run
-Firstly, download [KITTI left images and labels](http://www.cvlibs.net/datasets/kitti/eval_tracking.php) to evaluate the model.
+Firstly, [download](http://www.cvlibs.net/datasets/kitti/eval_tracking.php) the KITTI left images and labels to evaluate the model.
 
 Secondly, download the pretrained [ddd_3dop.pth](https://drive.google.com/open?id=1znsM6E-aVTkATreDuUVxoU0ajL1az8rz) model.
+
+Finally, install all the necessary pip3 packages:
+~~~
+sudo pip3 install -r requirements.txt
+~~~
 
 To predict and track objects from KITTI, use:
 ~~~
