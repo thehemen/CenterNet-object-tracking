@@ -4,7 +4,7 @@ This project is used to implement the KITTI object detection and tracking system
 # How to run
 Firstly, [download](http://www.cvlibs.net/datasets/kitti/eval_tracking.php) the KITTI left images and labels to evaluate the model.
 
-Secondly, download the pretrained [ddd_3dop.pth](https://drive.google.com/open?id=1znsM6E-aVTkATreDuUVxoU0ajL1az8rz) model.
+Secondly, download the pretrained [ddd_3dop.pth](https://drive.google.com/file/d/1LrAzVJqlZECVuyr_NJI_4xd88mA1fL5b) model.
 
 Finally, follow [these steps](https://github.com/xingyizhou/CenterNet/blob/master/readme/INSTALL.md) for installation.
 
